@@ -1,0 +1,313 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
+#include <string>
+#include <cstring> //to use strcpy
+
+using namespace std;
+
+// --- Structures ---
+//To hold patient's personal data
+struct Patient { 
+    string name;
+    int age = 0;
+    string contact;
+    string medicalHistory;
+};
+
+//To link a specific time/date to a patient record
+struct Appointment { 
+    string date;
+    string time;
+    Patient patient;
+    bool booked = false;
+};
+
+// Global variables 
+const int MAX_APPOINTMENTS = 30; //Maximum capacity of appointments
+const int MAX_DATES = 10; //Maximum size for date storage
+const int MAX_TIMESLOTS = 10; //Maximum number of slots per day
+
+Appointment appointments[MAX_APPOINTMENTS];
+int appointmentCount = 0; //To track the total number of slots booked
+string availableDates[MAX_DATES];
+string availableTimes[MAX_DATES][MAX_TIMESLOTS];
+int timeSlotsCount[MAX_DATES] = { 0 };
+int dateCount = 0;
+
+// Function Prototypes 
+void initializeTimeSlots();
+void displayMainMenu();
+void checkAvailability();
+void viewPatientDetails();
+void editPatientDetails();
+
+int main() {
+    initializeTimeSlots();
+
+    char statusMessage[100] = "Ready";
+    int choice;
+    string input;
+    int attempts = 0;
+    bool keepRunning = true;
+
+    //Main loop to keep the system active until user exits
+    while (keepRunning) {
+        displayMainMenu();
+        cout << "Action Status: " << statusMessage << endl;
+        cout << "Enter your choice (1-3) or 0 to Exit: ";
+        getline(cin, input); // Detect if user just presses "ENTER"
+
+        //Input validation (Checks if the string is empty to prevent user presses Enter
+        if (input.empty()) {
+            attempts++;
+            strcpy(statusMessage, "[WARNING] No input detected!");
+            cout << "Attempt " << attempts << "/3. Empty input will shutdown the system.\n";
+
+            //System will be terminated if too many empty input occur
+            if (attempts >= 3) {
+                cout << "\n[SYSTEM] Too many empty inputs. Terminating program.\n";
+                break;
+            }
+            continue;
+        }
+
+        try {
+            choice = stoi(input); //Convert string input into integer 
+            attempts = 0; // Reset attempts on valid input
+        }
+        catch (...) {
+            strcpy(statusMessage, "Error! Please choose only (1-3) or 0 to Exit.");
+            continue;
+        }
+
+        //Selection using switch 
+        switch (choice) {
+        case 1:
+            checkAvailability();
+            strcpy(statusMessage, " Check Availability & Book.");
+            break;
+
+        case 2:
+            viewPatientDetails();
+            strcpy(statusMessage, " View Patient Details.");
+            break;
+
+        case 3:
+            editPatientDetails();
+            strcpy(statusMessage, " Edit Patient Details.");
+            break;
+
+        case 0:
+            cout << "\nSystem Shutdown.Goodbye!" << endl; //EXIT
+            keepRunning = false;
+            break;
+
+        default:
+            strcpy(statusMessage, "Error! Choice out of range.");
+            break;
+        }
+
+        if (keepRunning) {
+            cout << "\nPress Enter to return to menu...";
+            string pause;
+            getline(cin, pause);
+        }
+    }
+    return 0;
+}
+
+// Function Definitions
+void initializeTimeSlots() {
+    //Pre-set the clinic's operating dates
+    availableDates[0] = "15-01-2026";
+    availableDates[1] = "16-01-2026";
+    availableDates[2] = "17-01-2026";
+    availableDates[3] = "18-01-2026";
+    availableDates[4] = "19-01-2026";
+    dateCount = 5;
+
+    //Set slots for each date 
+    for (int i = 0; i < dateCount; i++) {
+        availableTimes[i][0] = "09:00";
+        availableTimes[i][1] = "10:00";
+        availableTimes[i][2] = "11:00";
+        availableTimes[i][3] = "14:00";
+        availableTimes[i][4] = "15:00";
+        availableTimes[i][5] = "16:00";
+        timeSlotsCount[i] = 6; //Ensure that initial capacity of 6 slots per day
+    }
+}
+
+void displayMainMenu() {
+    cout << "\n========================================";
+    cout << "\n      CLINIC BOOKING SYSTEM (2026)      ";
+    cout << "\n========================================\n";
+    cout << "\n1. Check Availability & Book Appointment\n";
+    cout << "2. View Patient Details\n";
+    cout << "3. Edit Patient Details\n";
+    cout << "0. Exit System\n";
+    cout << "\n========================================\n";
+}
+//CHECK AVAILABILITY & BOOK
+void checkAvailability() {
+    string input;
+    int totalAvailable = 0; //To calculate total slots across all dates
+
+    for (int i = 0; i < dateCount; i++) {
+        totalAvailable += timeSlotsCount[i];
+    }
+
+    //Return if all slots are full
+    if (totalAvailable == 0) {
+        cout << "\n[SORRY] All booking slots are currently full!\n";
+        return;
+    }
+
+    cout << "\nMaximum Appointments Allowed : 30\n"; //Max appointment allowed 
+    cout << "\n--- Available Dates ---\n";
+
+    for (int i = 0; i < dateCount; i++) {
+        if (timeSlotsCount[i] > 0)
+            cout << i + 1 << ". " << availableDates[i] << " [" << timeSlotsCount[i] << " slots]\n";
+    }
+
+    cout << "\nSelect a date number (or Enter to cancel): ";
+    getline(cin, input);
+    if (input.empty()) return;
+
+    try {
+        int Date = stoi(input) - 1;
+        if (Date >= 0 && Date < dateCount) {
+            if (timeSlotsCount[Date] == 0) {
+                cout << "No slots left for this date. Please choose another date.\n";
+                return;
+            }
+
+            cout << "\nAvailable Times for " << availableDates[Date] << ":\n";
+            for (int i = 0; i < timeSlotsCount[Date]; i++) {
+                cout << i + 1 << ". " << availableTimes[Date][i] << endl;
+            }
+
+
+            cout << "\nSelect time slot number: ";
+            getline(cin, input);
+            if (input.empty()) return;
+            int Time = stoi(input) - 1;
+
+            if (Time >= 0 && Time < timeSlotsCount[Date]) {
+                string selectedDate = availableDates[Date];
+                string selectedTime = availableTimes[Date][Time];
+
+                for (int j = Time; j < timeSlotsCount[Date] - 1; j++) {
+                    availableTimes[Date][j] = availableTimes[Date][j + 1];
+                }
+                timeSlotsCount[Date]--;
+
+                Patient patient;
+                cout << "\n--- Booking for " << selectedDate << " at " << selectedTime << " ---\n";
+                cout << "Full Name : ";
+                getline(cin, patient.name);
+
+                cout << "Age : ";
+                getline(cin, input);
+                patient.age = stoi(input);
+
+                cout << "Contact Number : ";
+                getline(cin, patient.contact);
+
+                cout << "Medical History : ";
+                getline(cin, patient.medicalHistory);
+
+                appointments[appointmentCount++] = { selectedDate, selectedTime, patient, true };
+
+                cout << "\n========================================\n";
+                cout << "   BOOKING CONFIRMED SUCCESSFULLY!   \n";
+                cout << "========================================\n";
+                cout << "Confirmation message sent.\n";
+                cout << "Patient ID: " << appointmentCount << endl;
+            }
+        }
+    }
+    catch (...) {
+        cout << "Invalid input. Please enter numbers only.\n";
+    }
+}
+
+//VIEW PATIENT DETAILS
+void viewPatientDetails() {
+    string input;
+    cout << "\nEnter Patient ID: ";
+    getline(cin, input);
+    if (input.empty()) return;
+
+    try {
+        int id = stoi(input);
+        if (id > 0 && id <= appointmentCount) {
+            Appointment& a = appointments[id - 1];
+            cout << "\n----------- Patient Record -----------";
+            cout << "\nName           : " << a.patient.name;
+            cout << "\nAge            : " << a.patient.age;
+            cout << "\nContact        : " << a.patient.contact;
+            cout << "\nMedical History: " << a.patient.medicalHistory;
+            cout << "\nAppointment    : " << a.date << " at " << a.time << "\n";
+            cout << "\n--------------------------------------\n";
+        }
+        else {
+            cout << "Record not found. \n";
+        }
+    }
+    catch (...) {
+        cout << "Invalid ID format.\n";
+    }
+}
+
+//EDIT PATIENT DETAILS
+void editPatientDetails() {
+    string input;
+    cout << "\nEnter Patient ID to edit: ";
+    getline(cin, input);
+    if (input.empty()) return;
+
+    try {
+        int id = stoi(input);
+        if (id > 0 && id <= appointmentCount) {
+
+            Appointment& a = appointments[id - 1];
+            cout << "\n--- Edit Selection for " << a.patient.name << " ---\n";
+            cout << "1. Name\n2. Age\n3. Contact Number\n4. Medical History\n0. Cancel\n";
+            cout << "\nEnter your choice (0-4): ";
+            getline(cin, input);
+            int editChoice = stoi(input);
+
+            if (editChoice == 1) {
+                cout << "New Name: ";
+                getline(cin, a.patient.name);
+                cout << "Name Updated. \n";
+            }
+            else if (editChoice == 2) {
+                cout << "New Age: ";
+                cin >> a.patient.age;
+                cout << "Age Updated. \n";
+            }
+            else if (editChoice == 3) {
+                cout << "New Contact: ";
+                getline(cin, a.patient.contact);
+                cout << "Contact updated.\n";
+            }
+            else if (editChoice == 4) {
+                cout << "New Medical History: ";
+                getline(cin, a.patient.medicalHistory);
+                cout << "Medical History updated.\n";
+            }
+            else if (editChoice == 0) {
+                cout << "\nEdit cancelled. No changes were made.\n";
+            }
+        }
+        else {
+            cout << "ID not found.\n";
+        }
+    }
+    catch (...) {
+        cout << "Invalid input or format.\n";
+    }
+}
