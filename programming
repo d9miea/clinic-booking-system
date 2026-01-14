@@ -7,7 +7,7 @@ using namespace std;
 
 // --- Structures ---
 //To hold patient's personal data
-struct Patient { 
+struct Patient {
     string name;
     int age = 0;
     string contact;
@@ -15,7 +15,7 @@ struct Patient {
 };
 
 //To link a specific time/date to a patient record
-struct Appointment { 
+struct Appointment {
     string date;
     string time;
     Patient patient;
@@ -33,6 +33,14 @@ string availableDates[MAX_DATES];
 string availableTimes[MAX_DATES][MAX_TIMESLOTS];
 int timeSlotsCount[MAX_DATES] = { 0 };
 int dateCount = 0;
+
+bool isAllDigits(string str) {
+    if (str.empty()) return false;
+    for (char c : str) {
+        if (!isdigit(c)) return false;
+    }
+    return true;
+}
 
 // Function Prototypes 
 void initializeTimeSlots();
@@ -188,7 +196,6 @@ void checkAvailability() {
                 cout << i + 1 << ". " << availableTimes[Date][i] << endl;
             }
 
-
             cout << "\nSelect time slot number: ";
             getline(cin, input);
             if (input.empty()) return;
@@ -208,9 +215,16 @@ void checkAvailability() {
                 cout << "Full Name : ";
                 getline(cin, patient.name);
 
-                cout << "Age : ";
-                getline(cin, input);
-                patient.age = stoi(input);
+                string ageInput;
+                while (true) {
+                    cout << "Age : ";
+                    getline(cin, ageInput);
+                    if (isAllDigits(ageInput)) {
+                        patient.age = stoi(ageInput);
+                        break;
+                    }
+                    cout << "Please enter number only.\n";
+                }
 
                 cout << "Contact Number : ";
                 getline(cin, patient.contact);
@@ -308,6 +322,10 @@ void editPatientDetails() {
         }
     }
     catch (...) {
+        cout << "Invalid input or format.\n";
+    }
+}
+
         cout << "Invalid input or format.\n";
     }
 }
